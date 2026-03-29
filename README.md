@@ -1,7 +1,6 @@
 # UADER_IS2_Gomez_Fernando_Emilio
 
 # Este repositorio pertenece a un alumno de universidad de dicha facultad UADER-FCyT
-# # TP1 - Gestión de la Configuración y Python
 
 ## Contenido del repositorio
 
