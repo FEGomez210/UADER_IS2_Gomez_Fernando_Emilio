@@ -6,73 +6,58 @@
 # Ayudante: Lic. Lucía Blanc
 # -------------------------------------------------------------------------
 
-class ModeloArbol:
+class ModeloMadera:
     """
-    Estado Intrínseco (Flyweight): Contiene los datos compartidos.
-    En un entorno real, aquí irían texturas de alta resolución o 
-    mallas poligonales pesadas.
+    Estado Intrínseco: Información pesada compartida entre miles de unidades.
     """
-    def __init__(self, nombre, color, textura):
-        self.nombre = nombre
-        self.color = color
-        self.textura = textura  # Imagina que esto pesa varios MB
+    def __init__(self, tipo, resistencia, imagen_tecnica):
+        self.tipo = tipo
+        self.resistencia = resistencia
+        self.imagen_tecnica = imagen_tecnica # Datos pesados (MBs)
 
-    def dibujar(self, x, y):
-        # Muestra cómo se combinan los datos compartidos con los únicos
-        print(f"Dibujando '{self.nombre}' ({self.color}) en pos: [{x}, {y}]")
+    def mostrar_detalle(self, id_serie):
+        print(f"ID: {id_serie} | Madera: {self.tipo} | Resistencia: {self.resistencia}")
 
 
-class FabricaDeArboles:
-    """
-    El Flyweight Factory: Asegura que los objetos compartidos se reutilicen.
-    Mantiene un pool de modelos para no duplicar memoria.
-    """
+class FabricaDeModelos:
+    """Gestor de Flyweights para evitar duplicados en RAM."""
     _modelos = {}
 
     @classmethod
-    def obtener_modelo(cls, nombre, color, textura):
-        llave = (nombre, color, textura)
-        if llave not in cls._modelos:
-            print(f"--- Creando nuevo modelo de árbol: {nombre} ---")
-            cls._modelos[llave] = ModeloArbol(nombre, color, textura)
-        return cls._modelos[llave]
+    def obtener_modelo(cls, tipo, resistencia, imagen):
+        if tipo not in cls._modelos:
+            cls._modelos[tipo] = ModeloMadera(tipo, resistencia, imagen)
+        return cls._modelos[tipo]
 
 
-class ArbolIndividual:
+class UnidadStock:
     """
-    Estado Extrínseco: Contiene los datos únicos de cada instancia.
-    Solo guarda las coordenadas y una referencia al modelo compartido.
+    Estado Extrínseco: Datos únicos por cada pieza física en el depósito.
     """
-    def __init__(self, x, y, modelo: ModeloArbol):
-        self.x = x
-        self.y = y
+    def __init__(self, id_serie, modelo: ModeloMadera):
+        self.id_serie = id_serie
         self.modelo = modelo
 
-    def mostrar(self):
-        # Delega el renderizado al modelo compartido pasando su estado único
-        self.modelo.dibujar(self.x, self.y)
+    def listar(self):
+        # Combina el ID único con los datos pesados compartidos
+        self.modelo.mostrar_detalle(self.id_serie)
 
-
-# --- TEST LOCAL PARA EL PUNTO 5 ---
+# --- Test de la Maderera ---
 if __name__ == "__main__":
-    print("\n=== TEST 5: PATRÓN FLYWEIGHT ===")
-    fabrica = FabricaDeArboles()
-
-    # Definimos 10,000 árboles, pero solo 2 modelos reales en memoria
-    bosque = []
+    print("=== GESTIÓN DE STOCK MADERERA (FLYWEIGHT) ===")
+    fabrica = FabricaDeModelos()
     
-    # Creamos muchos Robles (comparten el mismo modelo)
-    modelo_roble = fabrica.obtener_modelo("Roble", "Verde Oscuro", "textura_roble_4k.png")
-    for i in range(5):
-        bosque.append(ArbolIndividual(i*10, i*15, modelo_roble))
+    # Se cargan 2 modelos pesados una sola vez
+    m_pino = fabrica.obtener_modelo("Pino", "Media", "foto_pino_HD.raw")
+    m_euca = fabrica.obtener_modelo("Eucalipto", "Alta", "foto_euca_HD.raw")
 
-    # Creamos muchos Pinos (comparten el mismo modelo)
-    modelo_pino = fabrica.obtener_modelo("Pino", "Verde Claro", "textura_pino_4k.png")
-    for i in range(5):
-        bosque.append(ArbolIndividual(i*12, i*22, modelo_pino))
+    # Se crean 10.000 unidades en stock usando solo esos 2 modelos
+    deposito = [UnidadStock(f"SERIE-{i}", m_pino if i % 2 == 0 else m_euca) for i in range(10000)]
 
-    print("\nRenderizando Bosque Eficiente:")
-    for arbol in bosque:
-        arbol.mostrar()
+    # Mostramos los primeros 5 para verificar
+    for unidad in deposito[:5]:
+        unidad.listar()
 
-    print(f"\nResumen de memoria: {len(bosque)} árboles creados, pero solo {len(FabricaDeArboles._modelos)} modelos en RAM.")
+    print(f"\nÉxito: {len(deposito)} unidades procesadas usando solo {len(FabricaDeModelos._modelos)} objetos pesados.")
+
+    
